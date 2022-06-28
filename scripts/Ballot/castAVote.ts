@@ -1,20 +1,13 @@
-import { ethers } from "ethers";
+import { Contract, ethers } from "ethers";
 import "dotenv/config";
 import * as ballotJson from "../../artifacts/contracts/Ballot.sol/Ballot.json";
+// eslint-disable-next-line node/no-missing-import
+import { Ballot } from "../../typechain";
 
 // This key is already public on Herong's Tutorial Examples - v1.03, by Dr. Herong Yang
 // Do never expose your keys like this
 const EXPOSED_KEY =
   "8da4ef21b864d2cc526dbdb2a120bd2874c36c9d0a1fb7f8c63d7f7a8b41de8f";
-
-function convertStringArrayToBytes32(array: string[]) {
-  const bytes32Array = [];
-  for (let index = 0; index < array.length; index++) {
-    bytes32Array.push(ethers.utils.formatBytes32String(array[index]));
-  }
-  console.log(bytes32Array);
-  return bytes32Array;
-}
 
 async function main() {
   const wallet =
@@ -22,7 +15,6 @@ async function main() {
       ? ethers.Wallet.fromMnemonic(process.env.MNEMONIC)
       : new ethers.Wallet(process.env.PRIVATE_KEY ?? EXPOSED_KEY);
   console.log(`Using address ${wallet.address}`);
-  // return;
   const provider = ethers.providers.getDefaultProvider("ropsten");
   const signer = wallet.connect(provider);
   const balanceBN = await signer.getBalance();
@@ -31,25 +23,26 @@ async function main() {
   if (balance < 0.01) {
     throw new Error("Not enough ether");
   }
-  console.log("Deploying Ballot contract");
-  console.log("Proposals: ");
-  const proposals = process.argv.slice(2);
-  if (proposals.length < 2) throw new Error("Not enough proposals provided");
-  proposals.forEach((element, index) => {
-    console.log(`Proposal N. ${index + 1}: ${element}`);
-  });
-  const ballotFactory = new ethers.ContractFactory(
+  if (process.argv.length < 3) throw new Error("Ballot address missing");
+  const ballotAddress = process.argv[2];
+  if (process.argv.length < 4) throw new Error("Voter address missing");
+  const voterAddress = process.argv[3];
+  console.log(
+    `Attaching ballot contract interface to address ${ballotAddress}`
+  );
+  const ballotContract: Ballot = new Contract(
+    ballotAddress,
     ballotJson.abi,
-    ballotJson.bytecode,
     signer
-  );
-  const ballotContract = await ballotFactory.deploy(
-    convertStringArrayToBytes32(proposals)
-  );
-  console.log("Awaiting confirmations");
-  await ballotContract.deployed();
-  console.log("Completed");
-  console.log(`Contract deployed at ${ballotContract.address}`);
+  ) as Ballot;
+
+  // console.log(voterAddress);
+  console.log("voterAddress");
+  // TODO: Write the script for casting a vote
+  // I need the proposal's index for it
+  // The message sender's address
+  // I will need an if to prevent the person from voting if their weight is zero and if their voted status is true
+  // Once they have voted, we have to changed the voted state to true
 }
 
 main().catch((error) => {
