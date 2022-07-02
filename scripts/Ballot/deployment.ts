@@ -17,24 +17,30 @@ function convertStringArrayToBytes32(array: string[]) {
 }
 
 async function main() {
+  // Variable for initializing a wallet, ternary operator to check if there is a private key
   const wallet =
     process.env.MNEMONIC && process.env.MNEMONIC.length > 0
       ? ethers.Wallet.fromMnemonic(process.env.MNEMONIC)
       : new ethers.Wallet(process.env.PRIVATE_KEY ?? EXPOSED_KEY);
   console.log(`Using address ${wallet.address}`);
-  // return;
+  // Getting a provider to abstrac a connection to the Ethereum blockchain
   const provider = ethers.providers.getDefaultProvider("ropsten");
+  // Calling connect method on the wallet and passing the provider as an argument. Not sure if this method is coming from ethers.js or if it is a hardhat helper.
   const signer = wallet.connect(provider);
-  const balanceBN = await signer.getBalance();
-  const balance = Number(ethers.utils.formatEther(balanceBN));
+  // Getting the wallet's balance (In wei I believe)
+  const balanceBigNumber = await signer.getBalance();
+  // Formating balance(wei) into a decimal string representing the amount of ether
+  const balance = Number(ethers.utils.formatEther(balanceBigNumber));
   console.log(`Wallet balance ${balance}`);
   if (balance < 0.01) {
     throw new Error("Not enough ether");
   }
   console.log("Deploying Ballot contract");
   console.log("Proposals: ");
+  // Array containing the arguments (proposals) passed to the process when run it in the command line. The first two arguments are something which I am not sure of
   const proposals = process.argv.slice(2);
   if (proposals.length < 2) throw new Error("Not enough proposals provided");
+  // Iterating over the proposals and printing them
   proposals.forEach((element, index) => {
     console.log(`Proposal N. ${index + 1}: ${element}`);
   });
