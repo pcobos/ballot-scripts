@@ -35,12 +35,22 @@ async function main() {
     ballotJson.abi,
     signer
   ) as Ballot;
+
+  // ----------------------------------------------------------
+
+  // Getting the chairperson's address via the getter function inside the ballotContract by calling it on its instance
   const chairpersonAddress = await ballotContract.chairperson();
+
+  // Condition to check if the person attempting to give voting rights is the chairman or not (by checking the signing address)
   if (chairpersonAddress !== signer.address)
     throw new Error("Caller is not the chairperson for this contract");
   console.log(`Giving right to vote to ${voterAddress}`);
+
+  // Storing the transaction in a variable. Transaction starts when we call the giveRightToVote external function on the Ballot contract's instance. Passing receiver's address as an argument
   const tx = await ballotContract.giveRightToVote(voterAddress);
   console.log("Awaiting confirmations");
+
+  // Resolving transaction to Transaction Receipt once the transaction has been mined
   await tx.wait();
   console.log(`Transaction completed. Hash: ${tx.hash}`);
 }
