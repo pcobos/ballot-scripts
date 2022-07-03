@@ -17,16 +17,20 @@ async function main() {
   console.log(`Using address ${wallet.address}`);
   const provider = ethers.providers.getDefaultProvider("ropsten");
   const signer = wallet.connect(provider);
-  const balanceBN = await signer.getBalance();
-  const balance = Number(ethers.utils.formatEther(balanceBN));
-  console.log(`Wallet balance ${balance}`);
-  if (balance < 0.01) {
-    throw new Error("Not enough ether");
-  }
+
+  // Conditional to check if the address was passed when running the script (3rd element in the process.argv array)
   if (process.argv.length < 3) throw new Error("Ballot address missing");
-  const ballotAddress = process.argv[2];
-  if (process.argv.length < 4) throw new Error("Voter address missing");
-  const voterAddress = process.argv[3];
+
+  // Storing the ballot address (value comes from the argv array, 3rd element)
+  const ballotAddress = ballotAdd || process.argv[2];
+  console.log(ballotAddress);
+
+  // Conditional to check if the proposal's index was passed when running the script (4th element in the process.argv array)
+  if (process.argv.length < 4) throw new Error("Proposal Index missing");
+
+  // Storing the proposal in a variable
+  const proposal = process.argv[3];
+
   console.log(
     `Attaching ballot contract interface to address ${ballotAddress}`
   );
@@ -42,10 +46,27 @@ async function main() {
   // I need the proposal's index for it
   // The message sender's address
   // I will need an if to prevent the person from voting if their weight is zero and if their voted status is true
-  // Once they have voted, we have to changed the voted state to true
+
+  const address = wallet.address;
+
+  // Condition to check if the voter has enough weight
+  if ((await ballotContract.voters(address)).weight < 1)
+    throw new Error("Voter does not have enough weight");
+
+  // Calling vote function from Ballot.sol and passing the
+  const vote = await ballotContract.vote(proposal);
+
+  // Waiting for transaction to be mined
+  await vote.wait();
+
+  // seeking confirmation that the address has voted (by console logging the voter object to make sure that the vote attribute is true)
+  const voter = await ballotContract.voters(address);
+  console.log(voter, "address", address);
 }
 
 main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
+
+export default main;
