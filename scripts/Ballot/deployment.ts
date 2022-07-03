@@ -44,15 +44,21 @@ async function main() {
   proposals.forEach((element, index) => {
     console.log(`Proposal N. ${index + 1}: ${element}`);
   });
+
+  // Creating a new instance of a ContractFactory passing interface (abi), the bytecode and the signer address as arguments
   const ballotFactory = new ethers.ContractFactory(
     ballotJson.abi,
     ballotJson.bytecode,
     signer
   );
+
+  // Deploying the contract passing the proposals array (in bytes 32) as arguments
   const ballotContract = await ballotFactory.deploy(
     convertStringArrayToBytes32(proposals)
   );
   console.log("Awaiting confirmations");
+
+  // Not sure what this line is necessary for. Looks like it is just a confirmation that it has been deployed
   await ballotContract.deployed();
   console.log("Completed");
   console.log(`Contract deployed at ${ballotContract.address}`);
