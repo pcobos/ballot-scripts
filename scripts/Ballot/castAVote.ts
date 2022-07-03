@@ -22,7 +22,7 @@ async function main() {
   if (process.argv.length < 3) throw new Error("Ballot address missing");
 
   // Storing the ballot address (value comes from the argv array, 3rd element)
-  const ballotAddress = ballotAdd || process.argv[2];
+  const ballotAddress = process.argv[2];
   console.log(ballotAddress);
 
   // Conditional to check if the proposal's index was passed when running the script (4th element in the process.argv array)
@@ -50,8 +50,13 @@ async function main() {
   const address = wallet.address;
 
   // Condition to check if the voter has enough weight
-  if ((await ballotContract.voters(address)).weight < 1)
-    throw new Error("Voter does not have enough weight");
+  // TODO - Parse the weight so that we can use the < operator on it. Suggest to store the weight in a variable
+  // Storing weight (BigNumber) in a variable
+  const weightBigNumber = (await ballotContract.voters(address)).weight;
+
+  const weight = Number(ethers.utils.formatEther(weightBigNumber));
+
+  if (weight < 1) throw new Error("Voter does not have enough weight");
 
   // Calling vote function from Ballot.sol and passing the
   const vote = await ballotContract.vote(proposal);
