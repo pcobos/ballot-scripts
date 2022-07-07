@@ -14,12 +14,13 @@ async function main() {
     process.env.MNEMONIC && process.env.MNEMONIC.length > 0
       ? ethers.Wallet.fromMnemonic(process.env.MNEMONIC)
       : new ethers.Wallet(process.env.PRIVATE_KEY ?? EXPOSED_KEY);
-
   console.log(`Using address ${wallet.address}`);
   const provider = ethers.providers.getDefaultProvider("ropsten");
   const signer = wallet.connect(provider);
+  // Conditional to check if the ballot address is passed as an argument (3rd element in argv array)
   if (process.argv.length < 3) throw new Error("Ballot address missing");
   const ballotAddress = process.argv[2];
+  // Conditional to check if the delegatee address is passed as an argument (3rd element in argv array)
   if (process.argv.length < 4) throw new Error("Delegated address missing");
   const delegatedAddress = process.argv[3];
 
@@ -32,18 +33,25 @@ async function main() {
     signer
   ) as Ballot;
 
+  // Storing chairperson in a variable (through Ballot contract's getter)
   const chairpersonAddress = await ballotContract.chairperson();
+  // Conditional to check if the message sender is the chairperson
   if (chairpersonAddress !== signer.address)
     throw new Error("Caller is not the chairperson for this contract");
 
-  // make sure the address has the right to vote
+  // Storing voter in a variable (passing the delegatee's address)
   const voter = await ballotContract.voters(delegatedAddress);
+  // Conditional to check if the voter can vote
   if (voter.weight.toNumber() < 1)
     throw new Error("This address does not have the right to vote!");
 
+  // Once confirmed that we can delegate the vote to this delegatee, we call the delegate method and pass his address as an argument
   const delegate = await ballotContract.delegate(delegatedAddress);
+
+  // Waiting for the transaction to go through
   await delegate.wait();
   console.log("Delegated!");
+  // Getting the voter again to check his new voting weight
   const voterDelegated = await ballotContract.voters(delegatedAddress);
   console.log(
     "The delegated address has a voting weight of",
