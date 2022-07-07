@@ -17,19 +17,25 @@ async function main() {
   console.log(`Using address ${wallet.address}`);
   const provider = ethers.providers.getDefaultProvider("ropsten");
   const signer = wallet.connect(provider);
+  // Balance in BigNumber
   const balanceBN = await signer.getBalance();
+  // Parsing BigNumber balance (from wei to decimal)
   const balance = Number(ethers.utils.formatEther(balanceBN));
   console.log(`Wallet balance ${balance}`);
+  // Conditional checking if wallet has enough balance
   if (balance < 0.01) {
     throw new Error("Not enough ether");
   }
+  // Conditional to check if the ballot address is passed as an argument (3rd element in argv array)
   if (process.argv.length < 3) throw new Error("Ballot address missing");
   const ballotAddress = process.argv[2];
+  // Conditional to check if the voter's address is passed as an argument (4th element in argv array)
   if (process.argv.length < 4) throw new Error("Voter address missing");
   const voterAddress = process.argv[3];
   console.log(
     `Attaching ballot contract interface to address ${ballotAddress}`
   );
+  // Not sure why we are not using the contract factory here, I believe it is because we are importing it from typechain
   const ballotContract: Ballot = new Contract(
     ballotAddress,
     ballotJson.abi,
