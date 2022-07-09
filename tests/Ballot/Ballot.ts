@@ -1,6 +1,8 @@
+// importing from chai, TDD library for node
 import { expect } from "chai";
 import { ethers } from "hardhat";
 // eslint-disable-next-line node/no-missing-import
+// importing the Ballot contract from Typechain, (Typescript bindings for Ethereum smart contracts)
 import { Ballot } from "../../typechain";
 
 const PROPOSALS = ["Proposal 1", "Proposal 2", "Proposal 3"];
@@ -13,6 +15,7 @@ function convertStringArrayToBytes32(array: string[]) {
   return bytes32Array;
 }
 
+// I understand what the function is doing but I am not sure why this function is here
 async function giveRightToVote(ballotContract: Ballot, voterAddress: any) {
   const tx = await ballotContract.giveRightToVote(voterAddress);
   await tx.wait();
